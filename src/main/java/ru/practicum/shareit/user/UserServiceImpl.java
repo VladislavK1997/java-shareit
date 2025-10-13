@@ -2,6 +2,9 @@ package ru.practicum.shareit.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exceptions.ConflictException;
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +21,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto create(UserDto userDto) {
+        // Валидация
+        if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
+            throw new ValidationException("Email cannot be empty");
+        }
+        if (!isValidEmail(userDto.getEmail())) {
+            throw new ValidationException("Invalid email format");
+        }
+
+        // Проверка на уникальность email
+        if (isEmailExists(userDto.getEmail())) {
+            throw new ConflictException("User with this email already exists");
+        }
+
         User user = UserMapper.toUser(userDto);
         User savedUser = userRepository.save(user);
         return UserMapper.toUserDto(savedUser);
@@ -27,14 +43,22 @@ public class UserServiceImpl implements UserService {
     public UserDto update(Long id, UserDto userDto) {
         User existingUser = userRepository.findById(id);
         if (existingUser == null) {
-            throw new RuntimeException("User not found with id: " + id);
+            throw new NotFoundException("User not found with id: " + id);
+        }
+
+        if (userDto.getEmail() != null) {
+            if (!isValidEmail(userDto.getEmail())) {
+                throw new ValidationException("Invalid email format");
+            }
+            User userWithSameEmail = findUserByEmail(userDto.getEmail());
+            if (userWithSameEmail != null && !userWithSameEmail.getId().equals(id)) {
+                throw new ConflictException("User with this email already exists");
+            }
+            existingUser.setEmail(userDto.getEmail());
         }
 
         if (userDto.getName() != null) {
             existingUser.setName(userDto.getName());
-        }
-        if (userDto.getEmail() != null) {
-            existingUser.setEmail(userDto.getEmail());
         }
 
         User updatedUser = userRepository.update(existingUser);
@@ -45,7 +69,7 @@ public class UserServiceImpl implements UserService {
     public UserDto getById(Long id) {
         User user = userRepository.findById(id);
         if (user == null) {
-            throw new RuntimeException("User not found with id: " + id);
+            throw new NotFoundException("User not found with id: " + id);
         }
         return UserMapper.toUserDto(user);
     }
@@ -59,6 +83,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(Long id) {
+        if (userRepository.findById(id) == null) {
+            throw new NotFoundException("User not found with id: " + id);
+        }
         userRepository.deleteById(id);
+    }
+
+    private boolean isEmailExists(String email) {
+        return userRepository.findAll().stream()
+                .anyMatch(user -> user.getEmail().equals(email));
+    }
+
+    private User findUserByEmail(String email) {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getEmail().equals(email))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.contains("@") && email.contains(".");
     }
 }
