@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,7 +22,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto create(UserDto userDto) {
-        // Валидация
         if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
             throw new ValidationException("Email cannot be empty");
         }
@@ -29,7 +29,6 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("Invalid email format");
         }
 
-        // Проверка на уникальность email
         if (isEmailExists(userDto.getEmail())) {
             throw new ConflictException("User with this email already exists");
         }
