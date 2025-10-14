@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.model;
 
 import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.exceptions.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,8 +31,8 @@ public class ItemRepository {
     }
 
     public Item update(Item item) {
-        if (!items.containsKey(item.getId())) {
-            throw new RuntimeException("Item not found with id: " + item.getId());
+        if (!existsById(item.getId())) {
+            throw new NotFoundException("Item not found with id: " + item.getId());
         }
         items.put(item.getId(), item);
         return item;
@@ -39,6 +40,10 @@ public class ItemRepository {
 
     public void deleteById(Long id) {
         items.remove(id);
+    }
+
+    public boolean existsById(Long id) {
+        return items.containsKey(id);
     }
 
     public List<Item> findByOwnerId(Long ownerId) {

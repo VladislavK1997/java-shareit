@@ -22,14 +22,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto create(UserDto userDto) {
-        if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
-            throw new ValidationException("Email cannot be empty");
-        }
-        if (!isValidEmail(userDto.getEmail())) {
-            throw new ValidationException("Invalid email format");
-        }
 
-        if (isEmailExists(userDto.getEmail())) {
+        validateUser(userDto);
+
+        if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new ConflictException("User with this email already exists");
         }
 
@@ -49,8 +45,7 @@ public class UserServiceImpl implements UserService {
             if (!isValidEmail(userDto.getEmail())) {
                 throw new ValidationException("Invalid email format");
             }
-            User userWithSameEmail = findUserByEmail(userDto.getEmail());
-            if (userWithSameEmail != null && !userWithSameEmail.getId().equals(id)) {
+            if (userRepository.existsByEmailAndIdNot(userDto.getEmail(), id)) {
                 throw new ConflictException("User with this email already exists");
             }
             existingUser.setEmail(userDto.getEmail());
@@ -82,22 +77,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(Long id) {
-        if (userRepository.findById(id) == null) {
+        if (!userRepository.existsById(id)) {
             throw new NotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }
 
-    private boolean isEmailExists(String email) {
-        return userRepository.findAll().stream()
-                .anyMatch(user -> user.getEmail().equals(email));
-    }
-
-    private User findUserByEmail(String email) {
-        return userRepository.findAll().stream()
-                .filter(user -> user.getEmail().equals(email))
-                .findFirst()
-                .orElse(null);
+    private void validateUser(UserDto userDto) {
+        if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
+            throw new ValidationException("Email cannot be empty");
+        }
+        if (!isValidEmail(userDto.getEmail())) {
+            throw new ValidationException("Invalid email format");
+        }
+        if (userDto.getName() == null || userDto.getName().isBlank()) {
+            throw new ValidationException("Name cannot be empty");
+        }
     }
 
     private boolean isValidEmail(String email) {

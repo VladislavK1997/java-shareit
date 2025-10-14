@@ -25,20 +25,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto addItem(ItemDto itemDto, Long ownerId) {
-        User owner = userRepository.findById(ownerId);
-        if (owner == null) {
-            throw new NotFoundException("User not found with id: " + ownerId);
-        }
+        validateUserExists(ownerId);
 
-        if (itemDto.getName() == null || itemDto.getName().isBlank()) {
-            throw new ValidationException("Item name cannot be empty");
-        }
-        if (itemDto.getDescription() == null || itemDto.getDescription().isBlank()) {
-            throw new ValidationException("Item description cannot be empty");
-        }
-        if (itemDto.getAvailable() == null) {
-            throw new ValidationException("Available field cannot be null");
-        }
+        validateItem(itemDto);
 
         Item item = ItemMapper.toItem(itemDto, ownerId);
         Item savedItem = itemRepository.save(item);
@@ -52,10 +41,7 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException("Item not found with id: " + itemId);
         }
 
-        User owner = userRepository.findById(ownerId);
-        if (owner == null) {
-            throw new NotFoundException("User not found with id: " + ownerId);
-        }
+        validateUserExists(ownerId);
 
         if (!existingItem.getOwnerId().equals(ownerId)) {
             throw new NotFoundException("User with id " + ownerId + " is not the owner of item " + itemId);
@@ -92,10 +78,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getAllItemsByOwner(Long ownerId) {
-        User owner = userRepository.findById(ownerId);
-        if (owner == null) {
-            throw new NotFoundException("User not found with id: " + ownerId);
-        }
+        validateUserExists(ownerId);
 
         return itemRepository.findByOwnerId(ownerId).stream()
                 .map(ItemMapper::toItemDto)
@@ -110,5 +93,24 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.search(text).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
+    }
+
+    private void validateUserExists(Long userId) {
+        User user = userRepository.findById(userId);
+        if (user == null) {
+            throw new NotFoundException("User not found with id: " + userId);
+        }
+    }
+
+    private void validateItem(ItemDto itemDto) {
+        if (itemDto.getName() == null || itemDto.getName().isBlank()) {
+            throw new ValidationException("Item name cannot be empty");
+        }
+        if (itemDto.getDescription() == null || itemDto.getDescription().isBlank()) {
+            throw new ValidationException("Item description cannot be empty");
+        }
+        if (itemDto.getAvailable() == null) {
+            throw new ValidationException("Available field cannot be null");
+        }
     }
 }
