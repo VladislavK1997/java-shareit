@@ -8,18 +8,22 @@ public class ItemMapper {
         if (item == null) {
             return null;
         }
-        return new ItemDto(
-                item.getId(),
-                item.getName(),
-                item.getDescription(),
-                item.getAvailable()
-        );
+
+        ItemDto dto = new ItemDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setDescription(item.getDescription());
+        dto.setAvailable(item.getAvailable());
+        dto.setRequestId(item.getRequestId());
+
+        return dto;
     }
 
     public static Item toItem(ItemDto itemDto, Long ownerId) {
         if (itemDto == null) {
             return null;
         }
+
         return new Item(
                 itemDto.getId(),
                 itemDto.getName(),
