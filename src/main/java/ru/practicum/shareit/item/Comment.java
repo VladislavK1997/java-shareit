@@ -39,7 +39,6 @@ public class Comment {
         this.created = created;
     }
 
-    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }

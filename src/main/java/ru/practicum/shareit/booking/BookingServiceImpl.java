@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Item;
@@ -34,7 +35,6 @@ public class BookingServiceImpl implements BookingService {
         User booker = getUserById(userId);
         Item item = getItemById(bookingDto.getItemId());
 
-        // Проверки
         if (!item.getAvailable()) {
             throw new ValidationException("Item is not available for booking");
         }
@@ -63,8 +63,9 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingById(bookingId);
 
         if (!booking.getItem().getOwnerId().equals(userId)) {
-            throw new NotFoundException("Only item owner can update booking status");
+            throw new ForbiddenException("Only item owner can update booking status");
         }
+
         if (booking.getStatus() != BookingStatus.WAITING) {
             throw new ValidationException("Booking status already decided");
         }
@@ -142,7 +143,6 @@ public class BookingServiceImpl implements BookingService {
                         .stream().map(BookingMapper::toBookingResponseDto).collect(Collectors.toList());
             case WAITING:
             case REJECTED:
-                // Для WAITING и REJECTED используем соответствующие статусы бронирования
                 BookingStatus bookingStatus = state == BookingStatus.WAITING ?
                         BookingStatus.WAITING : BookingStatus.REJECTED;
                 return bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(ownerId, bookingStatus, pageable)

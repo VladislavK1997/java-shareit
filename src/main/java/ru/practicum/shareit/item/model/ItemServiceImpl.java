@@ -73,12 +73,10 @@ public class ItemServiceImpl implements ItemService {
         Item item = getItemById(itemId);
         ItemDto itemDto = ItemMapper.toItemDto(item);
 
-        // Добавляем информацию о бронированиях только для владельца
         if (item.getOwnerId().equals(userId)) {
             addBookingInfo(itemDto);
         }
 
-        // Добавляем комментарии для всех пользователей
         addCommentsInfo(itemDto);
 
         return itemDto;
@@ -116,7 +114,6 @@ public class ItemServiceImpl implements ItemService {
         User author = getUserById(userId);
         Item item = getItemById(itemId);
 
-        // Проверяем, что пользователь действительно брал вещь в аренду
         boolean hasBookings = !bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(
                 itemId, userId, BookingStatus.APPROVED, LocalDateTime.now()).isEmpty();
 
@@ -137,7 +134,6 @@ public class ItemServiceImpl implements ItemService {
     private void addBookingInfo(ItemDto itemDto) {
         LocalDateTime now = LocalDateTime.now();
 
-        // Последнее бронирование
         List<BookingShortDto> lastBookings = bookingRepository
                 .findLastBookingForItem(itemDto.getId(), now, PageRequest.of(0, 1))
                 .stream().map(booking -> {
@@ -151,7 +147,6 @@ public class ItemServiceImpl implements ItemService {
             itemDto.setLastBooking(lastBookings.get(0));
         }
 
-        // Следующее бронирование
         List<BookingShortDto> nextBookings = bookingRepository
                 .findNextBookingForItem(itemDto.getId(), now, PageRequest.of(0, 1))
                 .stream().map(booking -> {

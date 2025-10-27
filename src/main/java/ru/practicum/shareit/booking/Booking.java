@@ -44,7 +44,6 @@ public class Booking {
         this.status = status;
     }
 
-    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }

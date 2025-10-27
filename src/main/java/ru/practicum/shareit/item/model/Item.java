@@ -37,7 +37,6 @@ public class Item {
         this.ownerId = ownerId;
     }
 
-    // Геттеры и сеттеры
     public Long getId() {
         return id;
     }
