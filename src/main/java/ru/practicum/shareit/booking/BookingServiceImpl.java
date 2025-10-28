@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.exceptions.ForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.model.Item;
@@ -62,8 +63,9 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingById(bookingId);
 
         if (!booking.getItem().getOwnerId().equals(userId)) {
-            throw new NotFoundException("Only item owner can update booking status");
+            throw new ForbiddenException("Only item owner can update booking status");
         }
+
         if (booking.getStatus() != BookingStatus.WAITING) {
             throw new ValidationException("Booking status already decided");
         }
