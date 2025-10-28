@@ -36,7 +36,9 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDto addItem(ItemDto itemDto, Long ownerId) {
-        User owner = getUserById(ownerId);
+        if (!userRepository.existsById(ownerId)) {
+            throw new NotFoundException("User not found with id: " + ownerId);
+        }
         validateItem(itemDto);
 
         Item item = ItemMapper.toItem(itemDto, ownerId);
@@ -48,7 +50,10 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     public ItemDto updateItem(Long itemId, ItemDto itemDto, Long ownerId) {
         Item existingItem = getItemById(itemId);
-        getUserById(ownerId);
+
+        if (!userRepository.existsById(ownerId)) {
+            throw new NotFoundException("User not found with id: " + ownerId);
+        }
 
         if (!existingItem.getOwnerId().equals(ownerId)) {
             throw new NotFoundException("User with id " + ownerId + " is not the owner of item " + itemId);
@@ -69,6 +74,23 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    public List<ItemDto> getAllItemsByOwner(Long ownerId, int from, int size) {
+        if (!userRepository.existsById(ownerId)) {
+            throw new NotFoundException("User not found with id: " + ownerId);
+        }
+
+        Pageable pageable = PageRequest.of(from / size, size);
+        List<Item> items = itemRepository.findByOwnerIdOrderById(ownerId);
+
+        return items.stream().map(item -> {
+            ItemDto itemDto = ItemMapper.toItemDto(item);
+            addBookingInfo(itemDto);
+            addCommentsInfo(itemDto);
+            return itemDto;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     public ItemDto getItemById(Long itemId, Long userId) {
         Item item = getItemById(itemId);
         ItemDto itemDto = ItemMapper.toItemDto(item);
@@ -78,22 +100,7 @@ public class ItemServiceImpl implements ItemService {
         }
 
         addCommentsInfo(itemDto);
-
         return itemDto;
-    }
-
-    @Override
-    public List<ItemDto> getAllItemsByOwner(Long ownerId, int from, int size) {
-        getUserById(ownerId);
-        Pageable pageable = PageRequest.of(from / size, size);
-
-        List<Item> items = itemRepository.findByOwnerIdOrderById(ownerId);
-        return items.stream().map(item -> {
-            ItemDto itemDto = ItemMapper.toItemDto(item);
-            addBookingInfo(itemDto);
-            addCommentsInfo(itemDto);
-            return itemDto;
-        }).collect(Collectors.toList());
     }
 
     @Override
@@ -111,7 +118,11 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentDto addComment(Long itemId, CommentDto commentDto, Long userId) {
-        User author = getUserById(userId);
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User not found with id: " + userId);
+        }
+
+        User author = getUserById(userId); // Получаем сущность только когда нужны данные пользователя
         Item item = getItemById(itemId);
 
         boolean hasBookings = !bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(
