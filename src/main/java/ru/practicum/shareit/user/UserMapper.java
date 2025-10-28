@@ -8,6 +8,7 @@ public class UserMapper {
         if (user == null) {
             return null;
         }
+
         return new UserDto(
                 user.getId(),
                 user.getName(),
@@ -19,6 +20,7 @@ public class UserMapper {
         if (userDto == null) {
             return null;
         }
+
         return new User(
                 userDto.getId(),
                 userDto.getName(),
