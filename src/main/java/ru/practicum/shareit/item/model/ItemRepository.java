@@ -1,67 +1,22 @@
 package ru.practicum.shareit.item.model;
 
-import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exceptions.NotFoundException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-@Repository
-public class ItemRepository {
-    private final Map<Long, Item> items = new HashMap<>();
-    private long idCounter = 1;
+public interface ItemRepository extends JpaRepository<Item, Long> {
 
-    public Item save(Item item) {
-        if (item.getId() == null) {
-            item.setId(idCounter++);
-        }
-        items.put(item.getId(), item);
-        return item;
-    }
+    List<Item> findByOwnerIdOrderById(Long ownerId);
 
-    public Item findById(Long id) {
-        return items.get(id);
-    }
+    @Query("SELECT i FROM Item i WHERE i.available = true AND " +
+            "(LOWER(i.name) LIKE LOWER(CONCAT('%', :text, '%')) OR " +
+            "LOWER(i.description) LIKE LOWER(CONCAT('%', :text, '%')))")
+    List<Item> searchAvailableItems(@Param("text") String text);
 
-    public List<Item> findAll() {
-        return new ArrayList<>(items.values());
-    }
+    List<Item> findByRequestIdIn(List<Long> requestIds);
 
-    public Item update(Item item) {
-        if (!existsById(item.getId())) {
-            throw new NotFoundException("Item not found with id: " + item.getId());
-        }
-        items.put(item.getId(), item);
-        return item;
-    }
-
-    public void deleteById(Long id) {
-        items.remove(id);
-    }
-
-    public boolean existsById(Long id) {
-        return items.containsKey(id);
-    }
-
-    public List<Item> findByOwnerId(Long ownerId) {
-        return items.values().stream()
-                .filter(item -> ownerId.equals(item.getOwnerId()))
-                .collect(Collectors.toList());
-    }
-
-    public List<Item> search(String text) {
-        if (text == null || text.isBlank()) {
-            return new ArrayList<>();
-        }
-
-        String lowerCaseText = text.toLowerCase();
-        return items.values().stream()
-                .filter(item -> Boolean.TRUE.equals(item.getAvailable()))
-                .filter(item -> (item.getName() != null && item.getName().toLowerCase().contains(lowerCaseText)) ||
-                        (item.getDescription() != null && item.getDescription().toLowerCase().contains(lowerCaseText)))
-                .collect(Collectors.toList());
-    }
+    List<Item> findByRequestId(Long requestId);
 }
