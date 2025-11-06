@@ -24,12 +24,15 @@ public class ItemMapper {
             return null;
         }
 
-        return new Item(
+        Item item = new Item(
                 itemDto.getId(),
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
                 ownerId
         );
+        item.setRequestId(itemDto.getRequestId());
+
+        return item;
     }
 }
