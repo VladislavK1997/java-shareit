@@ -80,7 +80,6 @@ class BookingControllerTest {
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
         bookingDto.setEnd(LocalDateTime.now().plusDays(2));
 
-        // When & Then
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bookingDto)))
@@ -88,19 +87,14 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.error").value("Missing required header: X-Sharer-User-Id"));
     }
 
-    // Убираем тесты на валидацию DTO, так как она не настроена
-    // Эти проверки должны выполняться на уровне сервиса
-
     @Test
     void updateStatus_ShouldReturnUpdatedBooking() throws Exception {
-        // Given
         BookingResponseDto responseDto = new BookingResponseDto();
         responseDto.setId(1L);
         responseDto.setStatus(BookingStatus.APPROVED);
 
         when(bookingService.updateStatus(anyLong(), anyBoolean(), anyLong())).thenReturn(responseDto);
 
-        // When & Then
         mockMvc.perform(patch("/bookings/1")
                         .header("X-Sharer-User-Id", 1L)
                         .param("approved", "true"))
@@ -111,7 +105,6 @@ class BookingControllerTest {
 
     @Test
     void updateStatus_WithoutUserIdHeader_ShouldReturnBadRequest() throws Exception {
-        // Given & When & Then
         mockMvc.perform(patch("/bookings/1")
                         .param("approved", "true"))
                 .andExpect(status().isBadRequest())
@@ -120,14 +113,12 @@ class BookingControllerTest {
 
     @Test
     void getById_ShouldReturnBooking() throws Exception {
-        // Given
         BookingResponseDto responseDto = new BookingResponseDto();
         responseDto.setId(1L);
         responseDto.setStatus(BookingStatus.WAITING);
 
         when(bookingService.getById(anyLong(), anyLong())).thenReturn(responseDto);
 
-        // When & Then
         mockMvc.perform(get("/bookings/1")
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
@@ -137,7 +128,6 @@ class BookingControllerTest {
 
     @Test
     void getById_WithoutUserIdHeader_ShouldReturnBadRequest() throws Exception {
-        // Given & When & Then
         mockMvc.perform(get("/bookings/1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Missing required header: X-Sharer-User-Id"));
@@ -145,7 +135,6 @@ class BookingControllerTest {
 
     @Test
     void getBookingsByBooker_WithoutUserIdHeader_ShouldReturnBadRequest() throws Exception {
-        // Given & When & Then
         mockMvc.perform(get("/bookings")
                         .param("state", "ALL")
                         .param("from", "0")
@@ -156,7 +145,6 @@ class BookingControllerTest {
 
     @Test
     void getBookingsByOwner_WithoutUserIdHeader_ShouldReturnBadRequest() throws Exception {
-        // Given & When & Then
         mockMvc.perform(get("/bookings/owner")
                         .param("state", "ALL")
                         .param("from", "0")
