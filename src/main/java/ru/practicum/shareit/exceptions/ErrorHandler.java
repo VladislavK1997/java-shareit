@@ -2,11 +2,10 @@ package ru.practicum.shareit.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.Objects;
 
 @RestControllerAdvice
 public class ErrorHandler {
@@ -38,8 +37,18 @@ public class ErrorHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
-        String errorMessage = Objects.requireNonNull(e.getBindingResult().getFieldError()).getDefaultMessage();
+        String errorMessage = "Validation error";
+        if (e.getBindingResult().getFieldError() != null &&
+                e.getBindingResult().getFieldError().getDefaultMessage() != null) {
+            errorMessage = e.getBindingResult().getFieldError().getDefaultMessage();
+        }
         return new ErrorResponse(errorMessage);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingRequestHeaderException(final MissingRequestHeaderException e) {
+        return new ErrorResponse("Missing required header: " + e.getHeaderName());
     }
 
     @ExceptionHandler(Exception.class)
