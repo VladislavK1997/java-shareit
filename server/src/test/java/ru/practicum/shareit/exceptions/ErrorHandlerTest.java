@@ -114,6 +114,7 @@ class ErrorHandlerTest {
         assertNotNull(errorResponse);
         assertEquals("Test error", errorResponse.getError());
     }
+
     @Test
     void handleMethodArgumentNotValidException_WithNullFieldError_ShouldReturnDefaultMessage() {
         MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
