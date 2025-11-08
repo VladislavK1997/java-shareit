@@ -70,4 +70,11 @@ class ItemRequestServiceImplTest {
 
         assertThrows(NotFoundException.class, () -> itemRequestService.getById(999L, 1L));
     }
+
+    @Test
+    void getById_ShouldThrowWhenUserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> itemRequestService.getById(1L, 1L));
+    }
 }

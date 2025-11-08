@@ -65,6 +65,24 @@ class UserServiceImplTest {
     }
 
     @Test
+    void createUser_WithBlankName_ShouldThrowValidationException() {
+        UserDto userDto = new UserDto();
+        userDto.setName("");
+        userDto.setEmail("john@email.com");
+
+        assertThrows(ValidationException.class, () -> userService.create(userDto));
+    }
+
+    @Test
+    void createUser_WithBlankEmail_ShouldThrowValidationException() {
+        UserDto userDto = new UserDto();
+        userDto.setName("John Doe");
+        userDto.setEmail("");
+
+        assertThrows(ValidationException.class, () -> userService.create(userDto));
+    }
+
+    @Test
     void getById_WithExistingId_ShouldReturnUser() {
         User user = createUser(1L, "John Doe", "john@email.com");
 
@@ -100,6 +118,77 @@ class UserServiceImplTest {
         assertNotNull(result);
         assertEquals("New Name", result.getName());
         assertEquals("new@email.com", result.getEmail());
+    }
+
+    @Test
+    void updateUser_ShouldUpdateOnlyName() {
+        User existingUser = createUser(1L, "Old Name", "email@email.com");
+        UserDto updateDto = new UserDto();
+        updateDto.setName("New Name");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any(User.class))).thenReturn(existingUser);
+
+        UserDto result = userService.update(1L, updateDto);
+
+        assertNotNull(result);
+        assertEquals("New Name", result.getName());
+        assertEquals("email@email.com", result.getEmail());
+    }
+
+    @Test
+    void updateUser_ShouldUpdateOnlyEmail() {
+        User existingUser = createUser(1L, "Name", "old@email.com");
+        UserDto updateDto = new UserDto();
+        updateDto.setEmail("new@email.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByEmailAndIdNot("new@email.com", 1L)).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(existingUser);
+
+        UserDto result = userService.update(1L, updateDto);
+
+        assertNotNull(result);
+        assertEquals("Name", result.getName());
+        assertEquals("new@email.com", result.getEmail());
+    }
+
+    @Test
+    void updateUser_ShouldThrowWhenDuplicateEmail() {
+        User existingUser = createUser(1L, "User", "user@email.com");
+        UserDto updateDto = new UserDto();
+        updateDto.setEmail("existing@email.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByEmailAndIdNot("existing@email.com", 1L)).thenReturn(true);
+
+        assertThrows(ConflictException.class, () -> userService.update(1L, updateDto));
+    }
+
+    @Test
+    void updateUser_ShouldThrowWhenUserNotFound() {
+        UserDto updateDto = new UserDto();
+        updateDto.setName("New Name");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> userService.update(1L, updateDto));
+    }
+
+    @Test
+    void deleteUser_ShouldDeleteUser() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(userRepository).deleteById(1L);
+
+        assertDoesNotThrow(() -> userService.delete(1L));
+        verify(userRepository).deleteById(1L);
+    }
+
+    @Test
+    void deleteUser_ShouldThrowWhenUserNotFound() {
+        when(userRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(NotFoundException.class, () -> userService.delete(1L));
     }
 
     private User createUser(Long id, String name, String email) {
