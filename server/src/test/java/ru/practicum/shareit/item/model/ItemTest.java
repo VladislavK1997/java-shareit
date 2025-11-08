@@ -7,13 +7,26 @@ class ItemTest {
 
     @Test
     void testEqualsAndHashCode() {
-        Item item1 = createItem(1L, "Item1", "Description1", true, 1L);
-        Item item2 = createItem(1L, "Item2", "Description2", false, 2L);
+        Item item1 = new Item();
+        item1.setId(1L);
+        item1.setName("Item1");
+        item1.setDescription("Description1");
+        item1.setAvailable(true);
+        item1.setOwnerId(1L);
+
+        Item item2 = new Item();
+        item2.setId(1L);
+        item2.setName("Item2");
+        item2.setDescription("Description2");
+        item2.setAvailable(false);
+        item2.setOwnerId(2L);
 
         assertEquals(item1, item2);
         assertEquals(item1.hashCode(), item2.hashCode());
 
-        Item item3 = createItem(3L, "Item1", "Description1", true, 1L);
+        Item item3 = new Item();
+        item3.setId(3L);
+
         assertNotEquals(item1, item3);
     }
 
@@ -23,13 +36,11 @@ class ItemTest {
         assertNotNull(item);
     }
 
-    private Item createItem(Long id, String name, String description, Boolean available, Long ownerId) {
-        Item item = new Item();
-        item.setId(id);
-        item.setName(name);
-        item.setDescription(description);
-        item.setAvailable(available);
-        item.setOwnerId(ownerId);
-        return item;
+    @Test
+    void testAllArgsConstructor() {
+        Item item = new Item(1L, "Item", "Description", true, 1L, 2L);
+        assertNotNull(item);
+        assertEquals(1L, item.getId());
+        assertEquals("Item", item.getName());
     }
 }
