@@ -16,12 +16,3 @@ public interface BookingService {
 
     List<BookingResponseDto> getBookingsByOwner(BookingState state, Long ownerId, int from, int size);
 }
-
-enum BookingState {
-    ALL,
-    CURRENT,
-    PAST,
-    FUTURE,
-    WAITING,
-    REJECTED
-}
