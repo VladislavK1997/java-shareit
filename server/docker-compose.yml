@@ -18,7 +18,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
     ports:
-      - "8080:8080"
+      - "9090:9090"
     depends_on:
       - postgres
 
@@ -27,8 +27,8 @@ services:
       context: ./gateway
       dockerfile: Dockerfile
     environment:
-      SHAREIT_SERVER_URL: http://shareit-server:8080
+      SHAREIT_SERVER_URL: http://shareit-server:9090
     ports:
-      - "80:8080"
+      - "8080:8080"
     depends_on:
       - shareit-server
