@@ -110,6 +110,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private List<Booking> getBookingsByBookerState(BookingState state, Long bookerId, Pageable pageable) {
+        if (state == null) {
+            throw new ValidationException("Unknown state: UNSUPPORTED_STATUS");
+        }
+
         switch (state) {
             case ALL:
                 return bookingRepository.findByBookerIdOrderByStartDesc(bookerId, pageable);
@@ -130,6 +134,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private List<Booking> getBookingsByOwnerState(BookingState state, Long ownerId, Pageable pageable) {
+        if (state == null) {
+            throw new ValidationException("Unknown state: UNSUPPORTED_STATUS");
+        }
+
         switch (state) {
             case ALL:
                 return bookingRepository.findByItemOwnerIdOrderByStartDesc(ownerId, pageable);
