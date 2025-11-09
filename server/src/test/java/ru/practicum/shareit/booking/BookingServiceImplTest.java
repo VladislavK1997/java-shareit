@@ -226,7 +226,7 @@ class BookingServiceImplTest {
 
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
-        assertThrows(NotFoundException.class, () -> bookingService.getById(1L, 3L));
+        assertThrows(ForbiddenException.class, () -> bookingService.getById(1L, 3L));
     }
 
     @Test

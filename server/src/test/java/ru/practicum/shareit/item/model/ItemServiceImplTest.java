@@ -155,6 +155,7 @@ class ItemServiceImplTest {
         Item item = createItem(1L, "Item", "Description", true, 1L);
 
         when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(commentRepository.findByItemIdOrderByCreatedDesc(1L)).thenReturn(Collections.emptyList());
 
         ItemDto result = itemService.getItemById(1L, 1L);
 
@@ -194,7 +195,6 @@ class ItemServiceImplTest {
         CommentDto commentDto = new CommentDto();
         commentDto.setText("Great item!");
 
-        when(userRepository.existsById(1L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(anyLong(), anyLong(), any(), any()))
@@ -220,7 +220,6 @@ class ItemServiceImplTest {
         CommentDto commentDto = new CommentDto();
         commentDto.setText("Comment");
 
-        when(userRepository.existsById(1L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
         when(bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(anyLong(), anyLong(), any(), any()))
@@ -234,7 +233,7 @@ class ItemServiceImplTest {
         CommentDto commentDto = new CommentDto();
         commentDto.setText("Comment");
 
-        when(userRepository.existsById(1L)).thenReturn(false);
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> itemService.addComment(1L, commentDto, 1L));
     }
@@ -245,7 +244,6 @@ class ItemServiceImplTest {
         CommentDto commentDto = new CommentDto();
         commentDto.setText("Comment");
 
-        when(userRepository.existsById(1L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(itemRepository.findById(1L)).thenReturn(Optional.empty());
 
