@@ -1,6 +1,9 @@
 package ru.practicum.shareit.booking;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BookingStatusTest {
@@ -24,5 +27,20 @@ class BookingStatusTest {
         assertThrows(IllegalArgumentException.class, () -> BookingStatus.from("invalid"));
         assertThrows(IllegalArgumentException.class, () -> BookingStatus.from(""));
         assertThrows(IllegalArgumentException.class, () -> BookingStatus.from(null));
+    }
+
+    @Test
+    void values_ShouldReturnAllStatuses() {
+        BookingStatus[] statuses = BookingStatus.values();
+
+        assertTrue(statuses.length > 0);
+        assertTrue(List.of(statuses).contains(BookingStatus.WAITING));
+    }
+
+    @Test
+    void valueOf_ShouldReturnCorrectStatus() {
+        assertEquals(BookingStatus.WAITING, BookingStatus.valueOf("WAITING"));
+        assertEquals(BookingStatus.APPROVED, BookingStatus.valueOf("APPROVED"));
+        assertEquals(BookingStatus.REJECTED, BookingStatus.valueOf("REJECTED"));
     }
 }

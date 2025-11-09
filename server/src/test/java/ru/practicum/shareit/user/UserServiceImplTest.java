@@ -10,10 +10,12 @@ import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -189,6 +191,90 @@ class UserServiceImplTest {
         when(userRepository.existsById(1L)).thenReturn(false);
 
         assertThrows(NotFoundException.class, () -> userService.delete(1L));
+    }
+
+    @Test
+    void getAll_ShouldReturnUsers() {
+        User user1 = createUser(1L, "User1", "user1@email.com");
+        User user2 = createUser(2L, "User2", "user2@email.com");
+
+        when(userRepository.findAll()).thenReturn(List.of(user1, user2));
+
+        List<UserDto> result = userService.getAll();
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+    }
+
+    @Test
+    void getAll_ShouldReturnEmptyListWhenNoUsers() {
+        when(userRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<UserDto> result = userService.getAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void updateUser_WithSameEmail_ShouldUpdateSuccessfully() {
+        User existingUser = createUser(1L, "Old Name", "user@email.com");
+        UserDto updateDto = new UserDto();
+        updateDto.setName("New Name");
+        updateDto.setEmail("user@email.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.existsByEmailAndIdNot("user@email.com", 1L)).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(existingUser);
+
+        UserDto result = userService.update(1L, updateDto);
+
+        assertNotNull(result);
+        assertEquals("New Name", result.getName());
+        assertEquals("user@email.com", result.getEmail());
+    }
+
+    @Test
+    void createUser_WithNullUserDto_ShouldThrowException() {
+        assertThrows(ValidationException.class, () -> userService.create(null));
+    }
+
+    @Test
+    void updateUser_WithNullUpdateDto_ShouldThrowException() {
+        User existingUser = createUser(1L, "User", "user@email.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+
+        assertThrows(ValidationException.class, () -> userService.update(1L, null));
+    }
+
+    @Test
+    void createUser_WithNullName_ShouldThrowException() {
+        UserDto userDto = new UserDto();
+        userDto.setName(null);
+        userDto.setEmail("john@email.com");
+
+        assertThrows(ValidationException.class, () -> userService.create(userDto));
+    }
+
+    @Test
+    void createUser_WithNullEmail_ShouldThrowException() {
+        UserDto userDto = new UserDto();
+        userDto.setName("John Doe");
+        userDto.setEmail(null);
+
+        assertThrows(ValidationException.class, () -> userService.create(userDto));
+    }
+
+    @Test
+    void updateUser_WithInvalidEmail_ShouldThrowException() {
+        User existingUser = createUser(1L, "User", "user@email.com");
+        UserDto updateDto = new UserDto();
+        updateDto.setEmail("invalid");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+
+        assertThrows(ValidationException.class, () -> userService.update(1L, updateDto));
     }
 
     private User createUser(Long id, String name, String email) {

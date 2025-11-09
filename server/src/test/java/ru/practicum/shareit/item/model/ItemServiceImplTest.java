@@ -9,6 +9,7 @@ import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
+import ru.practicum.shareit.item.Comment;
 import ru.practicum.shareit.item.CommentRepository;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -17,6 +18,7 @@ import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -257,7 +259,7 @@ class ItemServiceImplTest {
         Item item2 = createItem(2L, "Item2", "Description2", true, 1L);
 
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(itemRepository.findByOwnerIdOrderById(1L)).thenReturn(java.util.List.of(item1, item2));
+        when(itemRepository.findByOwnerIdOrderById(1L)).thenReturn(List.of(item1, item2));
         when(bookingRepository.findLastBookingForItem(anyLong(), any(), any())).thenReturn(Collections.emptyList());
         when(bookingRepository.findNextBookingForItem(anyLong(), any(), any())).thenReturn(Collections.emptyList());
         when(commentRepository.findByItemIdOrderByCreatedDesc(anyLong())).thenReturn(Collections.emptyList());
@@ -273,6 +275,140 @@ class ItemServiceImplTest {
         when(userRepository.existsById(1L)).thenReturn(false);
 
         assertThrows(NotFoundException.class, () -> itemService.getAllItemsByOwner(1L, 0, 10));
+    }
+
+    @Test
+    void getItemById_ForNonOwner_ShouldNotIncludeBookingInfo() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User otherUser = createUser(2L, "Other", "other@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(commentRepository.findByItemIdOrderByCreatedDesc(1L)).thenReturn(Collections.emptyList());
+
+        ItemDto result = itemService.getItemById(1L, 2L);
+
+        assertNotNull(result);
+        assertNull(result.getLastBooking());
+        assertNull(result.getNextBooking());
+    }
+
+    @Test
+    void addBookingInfo_ShouldSetLastAndNextBooking() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(bookingRepository.findLastBookingForItem(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(createBooking(owner, item)));
+        when(bookingRepository.findNextBookingForItem(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(createBooking(owner, item)));
+        when(commentRepository.findByItemIdOrderByCreatedDesc(anyLong())).thenReturn(Collections.emptyList());
+
+        ItemDto result = itemService.getItemById(1L, 1L);
+
+        assertNotNull(result);
+        assertNotNull(result.getLastBooking());
+        assertNotNull(result.getNextBooking());
+    }
+
+    @Test
+    void addCommentsInfo_ShouldSetComments() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User author = createUser(2L, "Author", "author@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Comment comment = new Comment(1L, "Great item!", item, author, LocalDateTime.now());
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(commentRepository.findByItemIdOrderByCreatedDesc(1L))
+                .thenReturn(Collections.singletonList(comment));
+
+        ItemDto result = itemService.getItemById(1L, 1L);
+
+        assertNotNull(result);
+        assertNotNull(result.getComments());
+        assertEquals(1, result.getComments().size());
+        assertEquals("Great item!", result.getComments().get(0).getText());
+    }
+
+    @Test
+    void searchItems_WithSpecialCharacters_ShouldReturnResults() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Drill-2000", "Powerful electric drill", true, owner.getId());
+
+        when(itemRepository.searchAvailableItems("drill")).thenReturn(Collections.singletonList(item));
+
+        List<ItemDto> result = itemService.searchItems("drill", 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void updateItem_WithPartialData_ShouldUpdateOnlyProvidedFields() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        Item existingItem = createItem(1L, "Old Name", "Old Description", true, 1L);
+        ItemDto updateDto = new ItemDto();
+        updateDto.setName("New Name");
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(existingItem));
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(itemRepository.save(any(Item.class))).thenReturn(existingItem);
+
+        ItemDto result = itemService.updateItem(1L, updateDto, 1L);
+
+        assertNotNull(result);
+        assertEquals("New Name", existingItem.getName());
+        assertEquals("Old Description", existingItem.getDescription());
+        assertTrue(existingItem.getAvailable());
+    }
+
+    @Test
+    void updateItem_WithOnlyDescription_ShouldUpdateOnlyDescription() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        Item existingItem = createItem(1L, "Old Name", "Old Description", true, 1L);
+        ItemDto updateDto = new ItemDto();
+        updateDto.setDescription("New Description");
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(existingItem));
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(itemRepository.save(any(Item.class))).thenReturn(existingItem);
+
+        ItemDto result = itemService.updateItem(1L, updateDto, 1L);
+
+        assertNotNull(result);
+        assertEquals("Old Name", existingItem.getName());
+        assertEquals("New Description", existingItem.getDescription());
+        assertTrue(existingItem.getAvailable());
+    }
+
+    @Test
+    void updateItem_WithOnlyAvailable_ShouldUpdateOnlyAvailable() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        Item existingItem = createItem(1L, "Old Name", "Old Description", true, 1L);
+        ItemDto updateDto = new ItemDto();
+        updateDto.setAvailable(false);
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(existingItem));
+        when(userRepository.existsById(1L)).thenReturn(true);
+        when(itemRepository.save(any(Item.class))).thenReturn(existingItem);
+
+        ItemDto result = itemService.updateItem(1L, updateDto, 1L);
+
+        assertNotNull(result);
+        assertEquals("Old Name", existingItem.getName());
+        assertEquals("Old Description", existingItem.getDescription());
+        assertFalse(existingItem.getAvailable());
+    }
+
+    @Test
+    void searchItems_WithEmptyResult_ShouldReturnEmptyList() {
+        when(itemRepository.searchAvailableItems("nonexistent")).thenReturn(Collections.emptyList());
+
+        List<ItemDto> result = itemService.searchItems("nonexistent", 0, 10);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     private User createUser(Long id, String name, String email) {

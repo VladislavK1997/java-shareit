@@ -16,6 +16,8 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -232,6 +234,232 @@ class BookingServiceImplTest {
         when(bookingRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> bookingService.getById(1L, 1L));
+    }
+
+    @Test
+    void getBookingsByBooker_ShouldThrowForUnknownState() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+
+        assertThrows(ValidationException.class, () ->
+                bookingService.getBookingsByBooker(null, 1L, 0, 10));
+    }
+
+    @Test
+    void getBookingsByOwner_ShouldThrowForUnknownState() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+
+        assertThrows(ValidationException.class, () ->
+                bookingService.getBookingsByOwner(null, 1L, 0, 10));
+    }
+
+    @Test
+    void getBookingsByBooker_WithAllState_ShouldReturnAllBookings() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+        User owner = createUser(2L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+        when(bookingRepository.findByBookerIdOrderByStartDesc(anyLong(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByBooker(BookingState.ALL, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByOwner_WithAllState_ShouldReturnAllBookings() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User booker = createUser(2L, "Booker", "booker@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItemOwnerIdOrderByStartDesc(anyLong(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByOwner(BookingState.ALL, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByBooker_WithCurrentState_ShouldReturnCurrentBookings() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+        User owner = createUser(2L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+        when(bookingRepository.findByBookerIdAndStartBeforeAndEndAfterOrderByStartDesc(anyLong(), any(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByBooker(BookingState.CURRENT, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByOwner_WithCurrentState_ShouldReturnCurrentBookings() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User booker = createUser(2L, "Booker", "booker@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItemOwnerIdAndStartBeforeAndEndAfterOrderByStartDesc(anyLong(), any(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByOwner(BookingState.CURRENT, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByBooker_WithPastState_ShouldReturnPastBookings() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+        User owner = createUser(2L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+        when(bookingRepository.findByBookerIdAndEndBeforeOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByBooker(BookingState.PAST, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByOwner_WithPastState_ShouldReturnPastBookings() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User booker = createUser(2L, "Booker", "booker@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItemOwnerIdAndEndBeforeOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByOwner(BookingState.PAST, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByBooker_WithFutureState_ShouldReturnFutureBookings() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+        User owner = createUser(2L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+        when(bookingRepository.findByBookerIdAndStartAfterOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByBooker(BookingState.FUTURE, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByOwner_WithFutureState_ShouldReturnFutureBookings() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User booker = createUser(2L, "Booker", "booker@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItemOwnerIdAndStartAfterOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByOwner(BookingState.FUTURE, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByBooker_WithWaitingState_ShouldReturnWaitingBookings() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+        User owner = createUser(2L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+        when(bookingRepository.findByBookerIdAndStatusOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByBooker(BookingState.WAITING, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByOwner_WithWaitingState_ShouldReturnWaitingBookings() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User booker = createUser(2L, "Booker", "booker@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByOwner(BookingState.WAITING, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByBooker_WithRejectedState_ShouldReturnRejectedBookings() {
+        User booker = createUser(1L, "Booker", "booker@email.com");
+        User owner = createUser(2L, "Owner", "owner@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+        booking.setStatus(BookingStatus.REJECTED);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(booker));
+        when(bookingRepository.findByBookerIdAndStatusOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByBooker(BookingState.REJECTED, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getBookingsByOwner_WithRejectedState_ShouldReturnRejectedBookings() {
+        User owner = createUser(1L, "Owner", "owner@email.com");
+        User booker = createUser(2L, "Booker", "booker@email.com");
+        Item item = createItem(1L, "Item", "Description", true, owner.getId());
+        Booking booking = createBooking(1L, item, booker);
+        booking.setStatus(BookingStatus.REJECTED);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItemOwnerIdAndStatusOrderByStartDesc(anyLong(), any(), any()))
+                .thenReturn(Collections.singletonList(booking));
+
+        List<BookingResponseDto> result = bookingService.getBookingsByOwner(BookingState.REJECTED, 1L, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
     }
 
     private User createUser(Long id, String name, String email) {
