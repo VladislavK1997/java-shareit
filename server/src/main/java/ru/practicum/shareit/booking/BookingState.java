@@ -6,11 +6,12 @@ public enum BookingState {
     PAST,
     FUTURE,
     WAITING,
-    REJECTED,
-    APPROVED,
-    CANCELED;
+    REJECTED;
 
     public static BookingState from(String stringState) {
+        if (stringState == null) {
+            return ALL;
+        }
         for (BookingState state : values()) {
             if (state.name().equalsIgnoreCase(stringState)) {
                 return state;

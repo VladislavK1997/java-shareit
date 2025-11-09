@@ -17,8 +17,13 @@ public class BookingMapper {
         dto.setStart(booking.getStart());
         dto.setEnd(booking.getEnd());
         dto.setStatus(booking.getStatus());
-        dto.setBooker(UserMapper.toUserDto(booking.getBooker()));
-        dto.setItem(ItemMapper.toItemDto(booking.getItem()));
+
+        if (booking.getBooker() != null) {
+            dto.setBooker(UserMapper.toUserDto(booking.getBooker()));
+        }
+        if (booking.getItem() != null) {
+            dto.setItem(ItemMapper.toItemDto(booking.getItem()));
+        }
 
         return dto;
     }

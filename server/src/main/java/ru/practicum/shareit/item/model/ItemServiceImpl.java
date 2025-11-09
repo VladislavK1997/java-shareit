@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
@@ -118,17 +119,13 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentDto addComment(Long itemId, CommentDto commentDto, Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("User not found with id: " + userId);
-        }
-
         User author = getUserById(userId);
         Item item = getItemById(itemId);
 
-        boolean hasBookings = !bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(
-                itemId, userId, BookingStatus.APPROVED, LocalDateTime.now()).isEmpty();
+        List<Booking> userBookings = bookingRepository.findByItemIdAndBookerIdAndStatusAndEndBefore(
+                itemId, userId, BookingStatus.APPROVED, LocalDateTime.now());
 
-        if (!hasBookings) {
+        if (userBookings.isEmpty()) {
             throw new ValidationException("User can only comment on items they have booked in the past");
         }
 
@@ -139,7 +136,13 @@ public class ItemServiceImpl implements ItemService {
         comment.setCreated(LocalDateTime.now());
 
         Comment savedComment = commentRepository.save(comment);
-        return CommentMapper.toCommentDto(savedComment);
+        CommentDto result = CommentMapper.toCommentDto(savedComment);
+
+        if (result != null) {
+            result.setAuthorName(author.getName());
+        }
+
+        return result;
     }
 
     private void addBookingInfo(ItemDto itemDto) {

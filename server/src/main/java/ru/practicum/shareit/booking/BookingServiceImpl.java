@@ -81,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
 
         if (!booking.getBooker().getId().equals(userId) &&
                 !booking.getItem().getOwnerId().equals(userId)) {
-            throw new NotFoundException("Only booker or owner can view booking");
+            throw new ForbiddenException("Only booker or owner can view booking");
         }
 
         return BookingMapper.toBookingResponseDto(booking);

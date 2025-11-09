@@ -52,17 +52,25 @@ public class ErrorHandler {
         return new ErrorResponse("Missing required header: " + e.getHeaderName());
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException e) {
+        if ("approved".equals(e.getName())) {
+            return new ErrorResponse("Invalid approved parameter");
+        }
+        return new ErrorResponse("Unknown state: " + (e.getValue() != null ? e.getValue().toString() : "UNSUPPORTED_STATUS"));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIllegalArgumentException(final IllegalArgumentException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleException(final Exception e) {
         return new ErrorResponse("Internal server error: " + e.getMessage());
-    }
-
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException e) {
-        return new ErrorResponse("Unknown state: " + e.getValue());
     }
 
     public static class ErrorResponse {
