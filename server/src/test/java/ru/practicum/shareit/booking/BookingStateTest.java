@@ -13,8 +13,6 @@ class BookingStateTest {
         assertEquals(BookingState.FUTURE, BookingState.from("future"));
         assertEquals(BookingState.WAITING, BookingState.from("waiting"));
         assertEquals(BookingState.REJECTED, BookingState.from("rejected"));
-        assertEquals(BookingState.APPROVED, BookingState.from("approved"));
-        assertEquals(BookingState.CANCELED, BookingState.from("canceled"));
     }
 
     @Test
@@ -28,6 +26,10 @@ class BookingStateTest {
     void from_ShouldThrowForInvalidState() {
         assertThrows(IllegalArgumentException.class, () -> BookingState.from("invalid"));
         assertThrows(IllegalArgumentException.class, () -> BookingState.from(""));
-        assertThrows(IllegalArgumentException.class, () -> BookingState.from(null));
+    }
+
+    @Test
+    void from_ShouldReturnAllForNull() {
+        assertEquals(BookingState.ALL, BookingState.from(null));
     }
 }

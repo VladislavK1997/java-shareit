@@ -79,7 +79,7 @@ class BookingControllerTest {
         when(bookingService.getBookingsByBooker(any(), anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of(responseDto));
 
-        List<BookingResponseDto> result = bookingController.getBookingsByBooker(BookingState.ALL, 1L, 0, 10);
+        List<BookingResponseDto> result = bookingController.getBookingsByBooker("ALL", 1L, 0, 10);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -95,7 +95,7 @@ class BookingControllerTest {
         when(bookingService.getBookingsByOwner(any(), anyLong(), anyInt(), anyInt()))
                 .thenReturn(List.of(responseDto));
 
-        List<BookingResponseDto> result = bookingController.getBookingsByOwner(BookingState.ALL, 1L, 0, 10);
+        List<BookingResponseDto> result = bookingController.getBookingsByOwner("ALL", 1L, 0, 10);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
