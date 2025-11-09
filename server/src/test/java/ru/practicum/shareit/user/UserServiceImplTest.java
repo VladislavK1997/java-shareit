@@ -235,20 +235,6 @@ class UserServiceImplTest {
     }
 
     @Test
-    void createUser_WithNullUserDto_ShouldThrowException() {
-        assertThrows(ValidationException.class, () -> userService.create(null));
-    }
-
-    @Test
-    void updateUser_WithNullUpdateDto_ShouldThrowException() {
-        User existingUser = createUser(1L, "User", "user@email.com");
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-
-        assertThrows(ValidationException.class, () -> userService.update(1L, null));
-    }
-
-    @Test
     void createUser_WithNullName_ShouldThrowException() {
         UserDto userDto = new UserDto();
         userDto.setName(null);

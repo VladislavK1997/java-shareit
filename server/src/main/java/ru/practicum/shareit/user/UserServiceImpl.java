@@ -21,6 +21,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto create(UserDto userDto) {
+        if (userDto == null) {
+            throw new ValidationException("UserDto cannot be null");
+        }
         validateUser(userDto);
 
         if (userRepository.existsByEmail(userDto.getEmail())) {
@@ -35,6 +38,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto update(Long id, UserDto userDto) {
+        if (userDto == null) {
+            throw new ValidationException("UserDto cannot be null");
+        }
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
 

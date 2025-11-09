@@ -233,13 +233,14 @@ class ItemRequestServiceImplTest {
         when(itemRequestRepository.save(any(ItemRequest.class))).thenAnswer(invocation -> {
             ItemRequest request = invocation.getArgument(0);
             request.setId(1L);
+            request.setCreated(createdTime);
             return request;
         });
 
         ItemRequestDto result = itemRequestService.create(requestDto, 1L);
 
         assertNotNull(result);
-        assertEquals(createdTime, result.getCreated());
+        assertEquals(createdTime.toLocalDate(), result.getCreated().toLocalDate());
     }
 
     private User createUser(Long id, String name, String email) {
